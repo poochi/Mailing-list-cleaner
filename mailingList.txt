@@ -1,0 +1,318 @@
+Send Kernelnewbies mailing list submissions to
+        kernelnewbies@kernelnewbies.org
+
+To subscribe or unsubscribe via the World Wide Web, visit
+        http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies
+or, via email, send a message with subject or body 'help' to
+        kernelnewbies-request@kernelnewbies.org
+
+You can reach the person managing the list at
+        kernelnewbies-owner@kernelnewbies.org
+
+When replying, please edit your Subject line so it is more specific
+than "Re: Contents of Kernelnewbies digest..."
+
+
+Today's Topics:
+
+   1. out-of-tree configuration (John Bougs)
+   2. Re: out-of-tree configuration (Anders Darander)
+   3. Re: out-of-tree configuration (john bougs)
+   4. Re: out-of-tree configuration (Valdis.Kletnieks@vt.edu)
+   5. Re: out-of-tree configuration (Anders Darander)
+   6. Re: out-of-tree configuration (john bougs)
+
+
+----------------------------------------------------------------------
+
+Message: 1
+Date: Wed, 18 Jun 2014 13:03:04 +0000 (UTC)
+From: John Bougs <bogusemail98230@yahoo.com>
+Subject: out-of-tree configuration
+To: kernelnewbies@kernelnewbies.org
+Message-ID: <loom.20140618T150123-555@post.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+
+I am working with a kernel module that has a few kconfig options associated
+with it. The makefile for the module as it is does not support out-of-tree
+builds. I am trying to change the the makefile to do out-of-tree builds.
+Most of this is pretty straight forward, however I can't seem to find any
+recomendations on to do local configurations for just the out of tree build.
+
+right now I use the code below, but I don't realy think it is a good
+solution because of the possible confilict between the local .config file
+and the kernel .config file. Any suggestions on how I should handle this?
+
+
+
+ifneq ($(KERNELRELEASE),)
+# kbuild part of makefile
+
+# Optionally, include config file to allow out of tree kernel modules build
+-include $(src)/.config
+
+# Core module
+obj-$(CONFIG_XXX)             += xxx.o
+xxx-y                         += xxx-core.o xxx-sysfs.o
+
+# drivers
+obj-$(CONFIG_XXX_1)    += xxx1.o
+obj-$(CONFIG_XXX_2)    += xxx2.o
+
+
+else
+# normal makefile
+KDIR ?= /lib/modules/`uname -r`/build
+
+default: .config
+        $(MAKE) -C $(KDIR) M=$$PWD modules
+
+.config:
+        @echo need local .config
+        exit 1
+
+modules_install:
+        $(MAKE) -C $(KDIR) M=$$PWD modules_install
+
+
+clean:
+        rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions \
+               modules.order Module.symvers
+
+endif
+
+
+
+
+------------------------------
+
+Message: 2
+Date: Wed, 18 Jun 2014 15:46:33 +0200
+From: Anders Darander <anders.darander@gmail.com>
+Subject: Re: out-of-tree configuration
+To: John Bougs <bogusemail98230@yahoo.com>
+Cc: kernelnewbies <kernelnewbies@kernelnewbies.org>
+Message-ID:
+        <CAE4k23_8RFNwfcXi3Vk8Knfpi296pvEGg9_OcFxRprvtySa+og@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8
+
+On 18 June 2014 15:03, John Bougs <bogusemail98230@yahoo.com> wrote:
+> I am working with a kernel module that has a few kconfig options associated
+> with it. The makefile for the module as it is does not support out-of-tree
+> builds. I am trying to change the the makefile to do out-of-tree builds.
+
+First, why do you want to build the module out-of-tree?
+
+For 3rd party modules I can understand that need, OTOH, in that case your
+question wouldn't have existed.
+
+Cheers,
+Anders
+
+--
+Anders Darander
+EPO guidelines 1978: "If the contribution to the known art resides
+solely in a computer program then the subject matter is not
+patentable in whatever manner it may be presented in the claims."
+
+
+
+------------------------------
+
+Message: 3
+Date: Wed, 18 Jun 2014 07:02:09 -0700
+From: john bougs <bogusemail98230@yahoo.com>
+Subject: Re: out-of-tree configuration
+To: Anders Darander <anders.darander@gmail.com>
+Cc: kernelnewbies <kernelnewbies@kernelnewbies.org>
+Message-ID:
+        <1403100129.65690.YahooMailNeo@web160703.mail.bf1.yahoo.com>
+Content-Type: text/plain; charset="iso-8859-1"
+
+
+
+
+
+On Wednesday, June 18, 2014 6:47 AM, Anders Darander <anders.darander@gmail.com> wrote:
+
+
+
+On 18 June 2014 15:03, John Bougs <bogusemail98230@yahoo.com> wrote:
+> I am working with a kernel module that has a few kconfig options associated
+> with it. The makefile for the module as it is does not support out-of-tree
+> builds. I am trying to change the the makefile to do out-of-tree builds.
+
+First, why do you want to build the module out-of-tree?
+
+For 3rd party modules I can understand that need, OTOH, in that case your
+question wouldn't have existed.
+
+
+I am working with a third party module that I am building out of tree.? I trying this across multiple platforms.? I am placing the module code in our VCS... out of tree seems to be a cleaner, simpler, les complicated? solution to me.
+
+Without? trying to sound confrontational, why not build it out of tree?
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: http://lists.kernelnewbies.org/pipermail/kernelnewbies/attachments/20140618/e810b8cd/attachment-0001.html
+
+------------------------------
+
+Message: 4
+Date: Wed, 18 Jun 2014 10:14:46 -0400
+From: Valdis.Kletnieks@vt.edu
+Subject: Re: out-of-tree configuration
+To: john bougs <bogusemail98230@yahoo.com>
+Cc: Anders Darander <anders.darander@gmail.com>,        kernelnewbies
+        <kernelnewbies@kernelnewbies.org>
+Message-ID: <37412.1403100886@turing-police.cc.vt.edu>
+Content-Type: text/plain; charset="iso-8859-1"
+
+On Wed, 18 Jun 2014 07:02:09 -0700, john bougs said:
+> Without? trying to sound confrontational, why not build it out of tree?
+
+Why not have it build in-tree? That way you can throw it at Greg KH
+and get it in (at least) drivers/staging, at which point you no longer
+have to do ongoing maintenance to keep in sync with new kernel APIs - if
+anybody changes an API that  you're using, it's their job to update
+your use of it. :)
+-------------- next part --------------
+A non-text attachment was scrubbed...
+Name: not available
+Type: application/pgp-signature
+Size: 848 bytes
+Desc: not available
+Url : http://lists.kernelnewbies.org/pipermail/kernelnewbies/attachments/20140618/3fd34c29/attachment-0001.bin
+
+------------------------------
+
+Message: 5
+Date: Wed, 18 Jun 2014 16:30:48 +0200
+From: Anders Darander <anders.darander@gmail.com>
+Subject: Re: out-of-tree configuration
+To: John Bougs <bogusemail98230@yahoo.com>
+Cc: kernelnewbies <kernelnewbies@kernelnewbies.org>
+Message-ID:
+        <CAE4k239TrVF2em96WUC1+bbqx71dSbdf8YCO0YHG-TpTQNr8kA@mail.gmail.com>
+Content-Type: text/plain; charset="utf-8"
+
+On 18 Jun 2014 16:02, "john bougs" <bogusemail98230@yahoo.com> wrote:
+>
+>
+>
+>
+> On Wednesday, June 18, 2014 6:47 AM, Anders Darander <
+anders.darander@gmail.com> wrote:
+>
+>
+> On 18 June 2014 15:03, John Bougs <bogusemail98230@yahoo.com> wrote:
+> > I am working with a kernel module that has a few kconfig options
+associated
+> > with it. The makefile for the module as it is does not support
+out-of-tree
+> > builds. I am trying to change the the makefile to do out-of-tree builds.
+>
+> First, why do you want to build the module out-of-tree?
+>
+> For 3rd party modules I can understand that need, OTOH, in that case your
+> question wouldn't have existed.
+>
+>
+> I am working with a third party module that I am building out of tree.  I
+trying this across multiple platforms.  I am placing the module code in our
+VCS... out of tree seems to be a cleaner, simpler, les complicated
+solution to me.
+
+Well, from your first email, I got the impression that you tried to move an
+in-tree module out of the kernel tree.
+
+What 3rd party module is it that you're building, that is delivered to you
+in a state to only allow in-tree builds? That's a pretty uncommon
+situation.
+
+Are the config options you need to be set something that only this module
+knows about, or are they something the rest of the kernel knows about?
+
+> Without  trying to sound confrontational, why not build it out of tree?
+
+Well, there's nothing wrong to build a true 3rd party module out-of-tree.
+It might very well be your only choice due to a number of factors.
+
+Though, if you can get it upstreamed, you'll win in the long term.
+
+Cheers,
+Anders
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: http://lists.kernelnewbies.org/pipermail/kernelnewbies/attachments/20140618/e9185bc0/attachment-0001.html
+
+------------------------------
+
+Message: 6
+Date: Wed, 18 Jun 2014 08:13:35 -0700
+From: john bougs <bogusemail98230@yahoo.com>
+Subject: Re: out-of-tree configuration
+To: Anders Darander <anders.darander@gmail.com>
+Cc: kernelnewbies <kernelnewbies@kernelnewbies.org>
+Message-ID:
+        <1403104415.31348.YahooMailNeo@web160702.mail.bf1.yahoo.com>
+Content-Type: text/plain; charset="iso-8859-1"
+
+
+
+
+
+
+On Wednesday, June 18, 2014 7:31 AM, Anders Darander <anders.darander@gmail.com> wrote:
+
+
+
+?
+Well, from your first email, I got the impression that you tried to move an in-tree module out of the kernel tree.
+What 3rd party module is it that you're building, that is delivered to you in a state to only allow in-tree builds? That's a pretty uncommon situation.
+Are the config options you need to be set something that only this module knows about, or are they something the rest of the kernel knows about?
+> Without? trying to sound confrontational, why not build it out of tree?
+Well, there's nothing wrong to build a true 3rd party module out-of-tree. It might very well be your only choice due to a number of factors.
+Though, if you can get it upstreamed, you'll win in the long term.
+Cheers,
+
+Anders
+
+
+I'm playing with a module off of github -? fbtft.?? All the config is local to the module.?
+
+Thanks
+
+
+
+
+
+
+
+
+
+?
+Well, from your first email, I got the impression that you tried to move an in-tree module out of the kernel tree.
+What 3rd party module is it that you're building, that is delivered to you in a state to only allow in-tree builds? That's a pretty uncommon situation.
+Are the config options you need to be set something that only this module knows about, or are they something the rest of the kernel knows about?
+> Without? trying to sound confrontational, why not build it out of tree?
+Well, there's nothing wrong to build a true 3rd party module out-of-tree. It might very well be your only choice due to a number of factors.
+Though, if you can get it upstreamed, you'll win in the long term.
+Cheers,
+
+Anders
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: http://lists.kernelnewbies.org/pipermail/kernelnewbies/attachments/20140618/558b04ca/attachment.html
+
+------------------------------
+
+_______________________________________________
+Kernelnewbies mailing list
+Kernelnewbies@kernelnewbies.org
+http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies
+
+
+End of Kernelnewbies Digest, Vol 43, Issue 48
+*********************************************
+	
+
